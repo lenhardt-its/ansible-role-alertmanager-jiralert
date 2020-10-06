@@ -1,0 +1,26 @@
+---
+galaxy_info:
+  role_name: alertmanager_jiralert
+  author: Dominik Lenhardt
+  description: Ansible role for installing and configuring Jiralert for Alertmanager
+  license: "MIT"
+  min_ansible_version: 2.9
+  platforms:
+    - name: Debian
+      versions:
+        - buster
+        - stretch
+    - name: Ubuntu
+      versions:
+        - focal
+        - bionic
+  galaxy_tags:
+  - system
+  - network
+  - linux
+  - monitoring
+  - prometheus
+  - jiralert
+  - jiraalert
+  - alertmanager
+dependencies: []

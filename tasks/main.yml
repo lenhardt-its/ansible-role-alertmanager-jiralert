@@ -1,0 +1,132 @@
+---
+- name: gather operating system variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+    - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+    - "{{ ansible_distribution_file_variety | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+    - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+    - "{{ ansible_distribution | lower }}.yml"
+    - "{{ ansible_os_family | lower }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
+    - "{{ ansible_os_family | lower }}.yml"
+
+- name: create system group
+  group:
+    name: "{{ jiralert_system_group }}"
+    system: true
+    state: present
+  when: jiralert_system_group != "root"
+  become: true
+  tags: jiralert
+
+- name: create system user
+  user:
+    name: "{{ jiralert_system_user }}"
+    system: true
+    shell: "/sbin/nologin"
+    group: "{{ jiralert_system_group }}"
+    createhome: false
+  when: jiralert_system_user != "root"
+  become: true
+  tags: jiralert
+
+- name: create directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ jiralert_system_user }}"
+    group: "{{ jiralert_system_group }}"
+    mode: 0755
+  with_items:
+    - "{{ jiralert_config_dir }}"
+  become: true
+  tags: jiralert
+
+- name: check if is installed
+  stat:
+    path: "{{ jiralert_binary_install_dir }}/jiralert"
+  register: __jiralert_is_installed
+  become: true
+  tags: jiralert
+
+- name: download binary to bin folder
+  get_url: 
+    url: "https://github.com/prometheus-community/jiralert/releases/download/{{ jiralert_version }}/jiralert-{{ jiralert_version }}.linux-amd64.tar.gz"
+    dest: "/tmp/jiralert-{{ jiralert_version }}.tar.gz"
+  environment: "{{proxy_env}}"
+  register: _download_binary
+  until: _download_binary is succeeded
+  retries: 5
+  delay: 2
+  delegate_to: localhost
+  check_mode: false
+  become: true
+  tags: jiralert
+  when: (not __jiralert_is_installed.stat.exists)
+
+- name: extract binaries
+  unarchive:
+    src: "/tmp/jiralert-{{ jiralert_version }}.tar.gz"
+    dest: "/tmp/"
+  become: true
+  tags: jiralert
+  when: (not __jiralert_is_installed.stat.exists)
+
+- name: propagate binaries
+  copy:
+    src: "/tmp/jiralert-{{ jiralert_version }}/jiralert"
+    dest: "{{ jiralert_binary_install_dir }}/jiralert"
+    mode: 0755
+    owner: root
+    group: root
+  notify: restart jiralert
+  become: true
+  tags: prometheus
+  when: (not __jiralert_is_installed.stat.exists)
+
+- name: configure config
+  template:
+    src: "jiralert.config.yml.j2"
+    dest: "{{ jiralert_config_dir }}/{{ jiralert_config_file }}"
+    owner: "{{ jiralert_system_user }}"
+    group: "{{ jiralert_system_group }}"
+    mode: 0644
+  notify: restart jiralert
+  become: true
+  tags:
+    - jiralert
+    - jiralert_config
+
+- name: copy templates
+  copy:
+    src: "{{ item }}.tmpl"
+    dest: "{{ jiralert_config_dir }}/{{ item }}.tmpl"
+    owner: "{{ jiralert_system_user }}"
+    group: "{{ jiralert_system_group }}"
+    mode: 0644
+  with_items: "{{ jiralert_config_template }}"
+  notify: reload jiralert
+  become: true
+  tags:
+    - jiralert
+    - jiralert_config
+
+- name: create systemd service unit
+  template:
+    src: jiralert.service.j2
+    dest: /etc/systemd/system/jiralert.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart jiralert
+  become: true
+  tags: jiralert
+
+- name: ensure service is started and enabled
+  systemd:
+    daemon_reload: true
+    name: jiralert
+    state: started
+    enabled: true
+  become: true
+  tags: jiralert

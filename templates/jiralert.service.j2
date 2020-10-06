@@ -1,0 +1,28 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description=Prometheus Jralert Alerting
+Documentation=https://github.com/prometheus-community/jiralert
+Wants=network-online.target
+After=network.target network-online.target
+
+[Service]
+Type=simple
+User={{ jiralert_system_user }}
+Group={{ jiralert_system_group }}
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart={{ jiralert_binary_install_dir }}/jiralert \
+  -config {{ jiralert_config_dir }}/{{ jiralert_config_file }} \
+		-hash-jira-label \
+KillSignal=SIGINT
+SyslogIdentifier=jiralert
+Restart=on-failure
+RestartSec=5
+{% if jiralert_http_proxy is defined %}
+Environment="HTTP_PROXY={{ jiralert_http_proxy }}"
+{% endif %}
+{% if jiralert_https_proxy is defined %}
+Environment="HTTPS_PROXY={{ jiralert_https_proxy }}"
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target

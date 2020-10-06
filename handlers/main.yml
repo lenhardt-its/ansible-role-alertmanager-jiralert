@@ -1,0 +1,29 @@
+---
+- name: restart jiralert
+  systemd:
+    daemon_reload: true
+    name: jiralert
+    state: restarted
+  become: true
+  tags: jiralert
+
+- name: reload jiralert
+  systemd:
+    name: jiralert
+    state: reloaded
+  become: true
+  tags: jiralert
+
+- name: reload ufw
+  systemd:
+    name: ufw
+    state: reloaded
+  tags: jiralert
+  become: true
+
+- name: reload firewalld
+  systemd:
+    name: firewalld
+    state: reloaded
+  tags: jiralert
+  become: true

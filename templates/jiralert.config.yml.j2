@@ -1,0 +1,23 @@
+{{ ansible_managed | comment }}
+{% if jiralert_config_defaults | length > 0 %}
+defaults:
+{% for key, value in jiralert_config_defaults.items() %}
+  {{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
+receivers:
+{% for receiver in jiralert_config_receivers %}
+  - name: {{ receiver.name }}
+{% for key, value in receiver.config.items() %}
+    {{ key }}: {{ value }}
+{% endfor %}
+{% if receiver.fields is defined %}
+    fields:
+{% for key, value in receiver.fields.items() %}
+      {{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% if jiralert_config_template | length > 0 %}
+template: {{ jiralert_config_template | default('jiralert')}}.tmpl
+{% endif %}
