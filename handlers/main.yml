@@ -1,0 +1,9 @@
+---
+- name: restart jiralert
+  systemd:
+    daemon_reload: true
+    name: jiralert
+    state: restarted
+  become: true
+  tags: jiralert
+

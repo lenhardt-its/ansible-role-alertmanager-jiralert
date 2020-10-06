@@ -1,0 +1,14 @@
+{{ ansible_managed | comment }}
+{% if jiralert_config_defaults | length > 0 %}
+defaults:
+{% for key, value in jiralert_config_defaults.items() %}
+  {{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
+{% if jiralert_config_receivers | length > 0 %}
+receivers:
+{{ jiralert_config_receivers | to_nice_yaml(indent=2) }}
+{% endif %}
+{% if jiralert_config_template | length > 0 %}
+template: {{ jiralert_config_template | default('jiralert')}}.tmpl
+{% endif %}

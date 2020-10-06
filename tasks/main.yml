@@ -1,0 +1,194 @@
+---
+- name: gather operating system variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+    - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+    - "{{ ansible_distribution_file_variety | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+    - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+    - "{{ ansible_distribution | lower }}.yml"
+    - "{{ ansible_os_family | lower }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
+    - "{{ ansible_os_family | lower }}.yml"
+
+- name: assert usage of systemd as an init system
+  assert:
+    that: ansible_service_mgr == 'systemd'
+    msg: "This module only works with systemd"
+  become: true
+  tags: jiralert
+
+- name: get systemd version
+  command: systemctl --version
+  changed_when: false
+  check_mode: false
+  register: __systemd_version
+  become: true
+  tags: jiralert
+
+- name: set systemd version fact
+  set_fact:
+    jiralert_systemd_version: "{{ __systemd_version.stdout_lines[0].split(' ')[-1] }}"
+  become: true
+  tags: jiralert
+
+- name: create system group
+  group:
+    name: "{{ jiralert_system_group }}"
+    system: true
+    state: present
+  when: jiralert_system_group != "root"
+  become: true
+  tags: jiralert
+
+- name: create system user
+  user:
+    name: "{{ jiralert_system_user }}"
+    system: true
+    shell: "/sbin/nologin"
+    group: "{{ jiralert_system_group }}"
+    createhome: false
+  when: jiralert_system_user != "root"
+  become: true
+  tags: jiralert
+
+- name: create configuration and data directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ jiralert_system_user }}"
+    group: "{{ jiralert_system_group }}"
+    mode: 0755
+  with_items:
+    - "{{ jiralert_config_dir }}"
+  become: true
+  tags: jiralert
+
+- name: check if jiralert is installed
+  stat:
+    path: "{{ jiralert_binary_install_dir }}/jiralert"
+  register: __jiralert_is_installed
+  become: true
+  tags: jiralert
+
+- block:
+  - name: download binary to bin folder
+    get_url:
+      url: "https://github.com/OnkelDom/jiralert/archive/{{ jiralert_version }}.tar.gz"
+      dest: "/tmp/jiralert-{{ jiralert_version }}.tar.gz"
+    environment: "{{proxy_env}}"
+    register: _download_binary
+    until: _download_binary is succeeded
+    retries: 5
+    delay: 2
+    delegate_to: localhost
+    check_mode: false
+    become: true
+    tags: jiralert
+
+  - name: Extract jiralert 
+    unarchive:
+      src: "/tmp/jiralert-{{ jiralert_version }}.tar.gz"
+      dest: "/tmp/"
+    become: true
+    tags: jiralert
+
+  - name: propagate binaries
+    copy:
+      src: "/tmp/jiralert-{{ jiralert_version }}/jiralert"
+      dest: "{{ jiralert_binary_install_dir }}/jiralert"
+      mode: 0755
+      owner: root
+      group: root
+    notify: restart jiralert
+    become: true
+    tags: prometheus
+  when: (not __jiralert_is_installed.stat.exists)
+
+- name: configure jiralert
+  template:
+    src: "jiralert.config.yml.j2"
+    dest: "{{ jiralert_config_dir }}/{{ jiralert_config_file }}"
+    owner: "{{ jiralert_system_user }}"
+    group: "{{ jiralert_system_group }}"
+    mode: 0644
+  notify: restart jiralert
+  become: true
+  tags: jiralert
+
+- name: configure jiralert templates
+  copy:
+    src: "{{ item }}.tmpl"
+    dest: "{{ jiralert_config_dir }}/{{ item }}.tmpl"
+    owner: "{{ jiralert_system_user }}"
+    group: "{{ jiralert_system_group }}"
+    mode: 0644
+  with_items: "{{ jiralert_config_template }}"
+  notify: restart jiralert
+  become: true
+  tags: jiralert
+
+- name: create systemd service unit
+  template:
+    src: jiralert.service.j2
+    dest: /etc/systemd/system/jiralert.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart jiralert
+  become: true
+  tags: jiralert
+
+- name: install selinux dependencies
+  package:
+    name: "{{ item }}"
+    state: present
+  environment: "{{ proxy_env }}"
+  with_items: "{{ jiralert_selinux_packages }}"
+  register: _install_packages
+  until: _install_packages is succeeded
+  retries: 5
+  delay: 2
+  when:
+    - ansible_version.full is version_compare('2.4', '>=')
+    - ansible_selinux.status == "enabled"
+  become: true
+  tags: jiralert
+
+- name: allow binding to port in selinux
+  seport:
+    ports: "{{ jiralert_web_listen_port }}"
+    proto: tcp
+    setype: http_port_t
+    state: present
+  when:
+    - _install_packages['changed']
+  become: true
+  tags: jiralert
+
+- name: allow access to port on firewalld
+  firewalld:
+    port: "{{ jiralert_web_listen_port }}/tcp"
+    permanent: yes
+    state: true
+  when: jiralert_firewalld_state == "enabled"
+  register: "_firewalld_jiralert_state"
+  become: true
+  tags: jiralert
+
+- name: reload firewalld service
+  service:
+    name: firewalld
+    state: reloaded
+  when: _firewalld_jiralert_state['changed']
+  become: true
+  tags: jiralert
+
+- name: ensure jiralert service is started and enabled
+  systemd:
+    daemon_reload: true
+    name: jiralert
+    state: started
+    enabled: true
+  become: true
+  tags: jiralert
+

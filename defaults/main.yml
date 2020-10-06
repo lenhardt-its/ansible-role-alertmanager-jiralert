@@ -1,0 +1,48 @@
+---
+proxy_env: {}
+jiralert_version: 3.3.0
+jiralert_config_dir: /etc/jiralert
+jiralert_template_dir: "{{ jiralert_config_dir }}/templates"
+jiralert_config_file: config.yml
+jiralert_firewalld_state: "disabled"
+jiralert_binary_install_dir: "/usr/local/bin"
+jiralert_system_user: "{{ jiralert_user | default('prometheus') }}"
+jiralert_system_group: "{{ jiralert_group | default('prometheus') }}"
+jiralert_web_listen_port: 9097
+jiralert_web_listen_address: "0.0.0.0"
+jiralert_default_template: jiralert
+jiralert_http_proxy: "proxy.infra.dvag.net:3128"
+jiralert_https_proxy: "proxy.infra.dvag.net:3128"
+jiralert_config_defaults: {}
+## API access fields.
+#api_url: https://projektportal.dvag.com/jira/
+#user: svc_Prometheus_Jira
+#password: 'RMvVKehXf3yy4u2'
+## The type of JIRA issue to create. Required.
+#issue_type: FR
+## Issue priority. Optional.
+#priority: Mittel
+## Go template invocation for generating the summary. Required.
+#summary: '{{ template "jira.summary" . }}'
+## Go template invocation for generating the description. Optional.
+#description: '{{ template "jira.description" . }}'
+## State to transition into when reopening a closed issue. Required.
+#reopen_state: "To Do"
+## Do not reopen issues with this resolution. Optional.
+#wont_fix_resolution: "Won't Fix"
+## Amount of time after being closed that an issue should be reopened, after which, a new issue is created.
+## Optional (default: always reopen)
+#reopen_duration: 0h
+#alert_hash: '{{ template "jira.summary" . }}'
+jiralert_config_receivers: {}
+## Must match the Alertmanager receiver name. Required.
+#- name: 'jira_monitoring_test'
+## JIRA project to create the issue in. Required.
+#project: MONNEU
+## Copy all Prometheus labels into separate JIRA labels. Optional (default: false).
+#add_group_labels: false
+#add_labels: false
+#issue_type: FR
+jiralert_config_template: jiralert
+#default template to use jiralert
+# https://github.com/OnkelDom/jiralert/archive/3.3.0.tar.gz
