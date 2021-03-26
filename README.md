@@ -8,7 +8,7 @@
 [![centos-8](https://img.shields.io/badge/centos-8.x-orange?style=flat&logo=centos)](https://www.centos.org/)
 [![License](https://img.shields.io/badge/license-MIT%20License-brightgreen.svg?style=flat)](https://opensource.org/licenses/MIT)
 [![GitHub issues](https://img.shields.io/github/issues/OnkelDom/ansible-role-alertmanager-jiralert?style=flat)](https://github.com/OnkelDom/ansible-role-alertmanager-jiralert/issues)
-[![GitHub tag](https://img.shields.io/github/tag/OnkelDom/ansible-role-node-alertmanager-jiralert.svg?style=flat)](https://github.com/OnkelDom/ansible-role-alertmanager-jiralert/tags)
+[![GitHub tag](https://img.shields.io/github/tag/OnkelDom/ansible-role-alertmanager-jiralert.svg?style=flat)](https://github.com/OnkelDom/ansible-role-alertmanager-jiralert/tags)
 
 ## Description
 
