@@ -1,18 +1,18 @@
 ---
 proxy_env: {}
-jiralert_version: 3.3.0
+jiralert_version: 1.0
 jiralert_config_dir: /etc/jiralert
 jiralert_template_dir: "{{ jiralert_config_dir }}/templates"
 jiralert_config_file: config.yml
-jiralert_firewalld_state: "disabled"
+jiralert_allow_firewall: false
 jiralert_binary_install_dir: "/usr/local/bin"
 jiralert_system_user: "{{ jiralert_user | default('prometheus') }}"
 jiralert_system_group: "{{ jiralert_group | default('prometheus') }}"
 jiralert_web_listen_port: 9097
-jiralert_web_listen_address: "0.0.0.0"
+jiralert_web_listen_address: 0.0.0.0
 jiralert_default_template: jiralert
-jiralert_http_proxy: "proxy.infra.dvag.net:3128"
-jiralert_https_proxy: "proxy.infra.dvag.net:3128"
+jiralert_http_proxy: []
+jiralert_https_proxy: []
 jiralert_config_defaults: {}
 ## API access fields.
 #api_url: https://projektportal.dvag.com/jira/

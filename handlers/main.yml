@@ -7,3 +7,9 @@
   become: true
   tags: jiralert
 
+- name: reload jiralert
+  systemd:
+    name: jiralert
+    state: reloaded
+  become: true
+  tags: jiralert
