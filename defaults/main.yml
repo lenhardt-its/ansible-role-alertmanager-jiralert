@@ -5,7 +5,7 @@ jiralert_config_dir: /etc/jiralert
 jiralert_template_dir: "{{ jiralert_config_dir }}/templates"
 jiralert_config_file: config.yml
 jiralert_allow_firewall: false
-jiralert_binary_install_dir: "/usr/local/bin"
+jiralert_binary_install_dir: /usr/local/bin
 jiralert_system_user: "{{ jiralert_user | default('prometheus') }}"
 jiralert_system_group: "{{ jiralert_group | default('prometheus') }}"
 jiralert_web_listen_port: 9097
