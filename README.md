@@ -34,8 +34,8 @@ All variables which can be overridden are stored in [defaults/main.yml](defaults
 | `jiralert_config_file` | config.yml | default config file |
 | `jiralert_allow_firewall` | false | allow firewall access |
 | `jiralert_binary_install_dir` | "/usr/local/bin" | default bin path |
-| `jiralert_system_user` | "{{ jiralert_user | default('prometheus') }}" | default system user |
-| `jiralert_system_group` | "{{ jiralert_group | default('prometheus') }}" | default system group |
+| `jiralert_system_user` | prometheus | default system user |
+| `jiralert_system_group` | prometheus | default system group |
 | `jiralert_web_listen_port` | 9097 | default listen port |
 | `jiralert_web_listen_address` | 0.0.0.0 | default listen address |
 | `jiralert_default_template` | jiralert | default template |
