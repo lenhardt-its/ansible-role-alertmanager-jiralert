@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  role_name: alertmanager-jiralert
+  role_name: alertmanager_jiralert
   author: Dominik Lenhardt
   description: Ansible role for installing and configuring Jiralert for Alertmanager
   license: "MIT"
