@@ -208,4 +208,3 @@
     enabled: true
   become: true
   tags: jiralert
-
