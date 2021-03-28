@@ -188,7 +188,9 @@
     port: "{{ jiralert_web_listen_port }}"
     proto: tcp
     state: enabled
-    comment: "jiralert"
+    comment: "Alertmanager Jiralert"
+  changed_when: False
+  ignore_errors: True
   notify: reload ufw
   become: true
   tags: jiralert
@@ -202,6 +204,8 @@
     port: "{{ jiralert_web_listen_port }}/tcp"
     permanent: yes
     state: true
+  changed_when: False
+  ignore_errors: True
   when:
     - "'running' in _firewalld_status.stdout"
     - jiralert_allow_firewall
